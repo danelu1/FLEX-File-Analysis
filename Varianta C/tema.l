@@ -22,12 +22,8 @@ char combination[255];
 char aux[255];
 %}
 
-%s COUNT
-%s FIND_DATA_TYPE
-%s INSIDE_MAIN
-%s FIND_VARIABLE_NAME
-%s FIND_ALLOCATIONS
 %s FIND_INSTANCES
+%s MAIN
 
 %%
 
@@ -37,6 +33,10 @@ char aux[255];
     sscanf(yytext + 5, " %[a-zA-Z0-9]+", classes[class_count]);
     put(&classes_map, classes[class_count], 0);
     class_count++;
+}
+
+"public static void main(String[] args)"[ ]*\{ {
+    printf("%s", yytext);
 }
 
 [ \t]*("int"|"float"|"long"|"double"|"char"|"byte"|"short"|"boolean")\[\][ ]+[a-zA-Z0-9]+[ ]*\=[ ]*"new"[ ]+("int"|"float"|"long"|"double"|"char"|"byte"|"short"|"boolean")\[[0-9]+\] { }
@@ -71,8 +71,20 @@ char aux[255];
     strcat(combination, " ");
     strcat(combination, variable_name);
     printf("\"%s\"", combination);
-    put(&allocations, combination, get(&allocations, combination) + 1);
-    put(&classes_map, data_type, get(&classes_map, data_type) + 1);
+
+    if (getValue(&allocations, combination) == -1) {
+        put(&allocations, combination, 1);
+    } else {
+        put(&allocations, combination, getValue(&allocations, combination) + 1);
+    }
+
+    if (getValue(&classes_map, data_type) == -1) {
+        put(&classes_map, data_type, 1);
+        //printf("\"%d\"", getValue(&classes_map, data_type));
+    } else {
+        put(&classes_map, data_type, getValue(&classes_map, data_type) + 1);
+        //printf("\"%s\": \"%d\"", data_type, getValue(&classes_map, data_type));
+    }
 }
 
 <FIND_INSTANCES>[ \t]*[a-zA-Z0-9]+\[[a-zA-Z0-9]+\][ ]*\=[ ]*"new"[ ]+[a-zA-Z0-9]+  {
@@ -131,7 +143,7 @@ int main(int argc, char **argv)
     printHashMap(&allocations);
 
     for (int i = 0; i < class_count; i++) {
-        fprintf(out_file, "Obiect %s: %d\n", classes[i], get(&classes_map, classes[i]));
+        fprintf(out_file, "Obiect %s: %d\n", classes[i], getValue(&classes_map, classes[i]));
     }
 
     fclose(yyin);

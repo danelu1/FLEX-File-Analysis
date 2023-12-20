@@ -5,6 +5,7 @@ public class MemoryAllocation {
         String[] stringArray = new String[5];
         Employee e1 = new Employee(1);
         Employee e2 = new Employee(2);
+        Employee e3 = new Employee(0);
     }
 }
 

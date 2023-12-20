@@ -9,6 +9,7 @@ class    Person {
 
     public void displayInfo() {
         System.out.println("Name: " + name + ", Age: " + age);
+        Person p = new Person("", 0);
     }
 }
 
