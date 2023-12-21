@@ -14,7 +14,7 @@ class    Person {
 }
 
 class  Bogdan {
-
+    Student s = new Student();
 }
 
 public class Student {

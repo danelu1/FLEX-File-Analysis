@@ -10,6 +10,7 @@ FILE *out_file;
 int class_count = 0;
 int variable = 0;
 int in_main = 0;
+int brace_count = 0;
 
 HashMap classes_map;
 HashMap allocations;
@@ -22,7 +23,6 @@ char combination[255];
 char aux[255];
 %}
 
-%s FIND_INSTANCES
 %s MAIN
 
 %%
@@ -35,17 +35,30 @@ char aux[255];
     class_count++;
 }
 
-"public static void main(String[] args)"[ ]*\{ {
+"public static void main(String[] args)" {
     printf("%s", yytext);
+    in_main = 1;
+    yy_push_state(MAIN);
 }
 
-[ \t]*("int"|"float"|"long"|"double"|"char"|"byte"|"short"|"boolean")\[\][ ]+[a-zA-Z0-9]+[ ]*\=[ ]*"new"[ ]+("int"|"float"|"long"|"double"|"char"|"byte"|"short"|"boolean")\[[0-9]+\] { }
-[ \t]*("Integer"|"Float"|"Long"|"Double"|"Character"|"Byte"|"Short"|"Boolean"|"String")\[\][ ]+[a-zA-Z0-9]+[ ]*\=[ ]*"new"[ ]+("Integer"|"Float"|"Long"|"Double"|"Character"|"Byte"|"Short"|"Boolean"|"String")\[[0-9]+\] { }
+<MAIN>\{ {
+    if (in_main == 1) {
+        brace_count++;
+    }
+}
 
-("private"|"public"|"")[ ]+("int"|"float"|"long"|"double"|"char"|"byte"|"short"|"boolean")("[]"|"")[ ]+[a-zA-Z0-9]+[ ]+\= { }
-("private"|"public"|"")[ ]+("Integer"|"Float"|"Long"|"Double"|"Character"|"Byte"|"Short"|"Boolean"|"String")("[]"|"")[ ]+[a-zA-Z0-9]+[ ]+\= { }
+<MAIN>\} {
+    if(in_main == 1) {
+        --brace_count;
+        if(brace_count == 0) {
+            printf("Exiting main method\n");
+            in_main = 0;
+            yy_pop_state();
+        }
+    }
+}
 
-[ \t]*[a-zA-Z0-9]+[\[\] ]+[a-zA-Z0-9]+[ ]*\=[ ]*"new"[ ]+[a-zA-Z0-9]+\[[0-9]+\]\; {
+<MAIN>[ \t]*[a-zA-Z0-9]+[\[\] ]+[a-zA-Z0-9]+[ ]*\=[ ]*"new"[ ]+[a-zA-Z0-9]+\[[0-9]+\]\; {
     sscanf(yytext, " %[a-zA-Z0-9][] %s", data_type, variable_name);
     sscanf(yytext, "%*[^0123456789]%d", &variable);
 
@@ -58,11 +71,9 @@ char aux[255];
     strcat(combination, variable_name);
     printf("\"%s\"", combination);
     put(&allocations, combination, variable);
-
-    yy_push_state(FIND_INSTANCES);
 }
 
-[ \t]*[a-zA-Z0-9]+[ ]+[a-zA-Z0-9]+[ ]*\=[ ]*"new"[ ]+[a-zA-Z0-9]+ {
+<MAIN>[ \t]*[a-zA-Z0-9]+[ ]+[a-zA-Z0-9]+[ ]*\=[ ]*"new"[ ]+[a-zA-Z0-9]+ {
     sscanf(yytext, " %[a-zA-Z0-9] %s", data_type, variable_name);
     printf("\"%s\"", data_type);
     printf("\"%s\"", variable_name);
@@ -78,16 +89,14 @@ char aux[255];
         put(&allocations, combination, getValue(&allocations, combination) + 1);
     }
 
-    if (getValue(&classes_map, data_type) == -1) {
+    if (contains(&classes_map, data_type) == 0) {
         put(&classes_map, data_type, 1);
-        //printf("\"%d\"", getValue(&classes_map, data_type));
     } else {
         put(&classes_map, data_type, getValue(&classes_map, data_type) + 1);
-        //printf("\"%s\": \"%d\"", data_type, getValue(&classes_map, data_type));
     }
 }
 
-<FIND_INSTANCES>[ \t]*[a-zA-Z0-9]+\[[a-zA-Z0-9]+\][ ]*\=[ ]*"new"[ ]+[a-zA-Z0-9]+  {
+<MAIN>[ \t]*[a-zA-Z0-9]+\[[a-zA-Z0-9]+\][ ]*\=[ ]*"new"[ ]+[a-zA-Z0-9]+  {
     char name[255];
     sscanf(yytext, " %[a-zA-Z0-9]+[[a-zA-Z0-9]+][ ]*=", name);
     printf("\"%s\"", name);
@@ -96,7 +105,6 @@ char aux[255];
         char *key = getKeyByWord(&allocations, name);
         char *class = strtok(key, " ");
         put(&classes_map, class, getValue(&classes_map, class) + x);
-        yy_pop_state();
     } else {
         REJECT;
     }

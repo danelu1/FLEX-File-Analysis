@@ -6,6 +6,8 @@ public class MemoryAllocation {
         Employee e1 = new Employee(1);
         Employee e2 = new Employee(2);
         Employee e3 = new Employee(0);
+        //MemoryAllocation oo = new MemoryAllocation();
+        Andrei a = new Andrei();
     }
 }
 
@@ -53,5 +55,9 @@ class Employee {
     public void setEmpCompany(final String eCompany) {
         this.empCompany = eCompany;
     }
+
+}
+
+class Andrei {
 
 }
