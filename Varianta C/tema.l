@@ -43,7 +43,8 @@ char aux[255];
     printf("%s", yytext);
     sscanf(yytext + 5, " %[a-zA-Z0-9]+", classes[class_count]);
     put(&classes_map, classes[class_count], 0);
-    //put(&classes_fields, classes[class_count], 0);
+    put(&get_map, classes[class_count], 0);
+    put(&set_map, classes[class_count], 0);
     yy_push_state(FIELDS);
 }
 
@@ -57,6 +58,25 @@ char aux[255];
     class_braces--;
     if (class_braces == 0) {
         class_count++;
+        fprintf(out_file, "%s:\n", classes[class_count - 1]);
+        if (get_no[class_count - 1] == 0 && set_no[class_count - 1] == 0) {
+            fprintf(out_file, "\t-> Nu exista atribute private.\n");
+        }
+        else if (get_no[class_count - 1] == getValue(&get_map, classes[class_count - 1]) && set_no[class_count - 1] == getValue(&set_map, classes[class_count - 1])) {
+            fprintf(out_file, "\t-> \"get\" si \"set\" sunt implementate.\n");
+        }
+        else if (get_no[class_count - 1] > getValue(&get_map, classes[class_count - 1]) && set_no[class_count - 1] > getValue(&set_map, classes[class_count - 1])) {
+            fprintf(out_file, "\t-> Metoda \"get\" nu este implementata pentru toate atributele;\n");
+            fprintf(out_file, "\t-> Metoda \"set\" nu este implementata pentru toate atributele.\n");
+        }
+        else if (get_no[class_count - 1] == getValue(&get_map, classes[class_count - 1]) && set_no[class_count - 1] > getValue(&set_map, classes[class_count - 1])) {
+            fprintf(out_file, "\t-> Metoda \"get\" este implementata;\n");
+            fprintf(out_file, "\t-> Metoda \"set\" nu este implementata pentru toate atributele.\n");
+        }
+        else if (get_no[class_count - 1] > getValue(&get_map, classes[class_count - 1]) && set_no[class_count - 1] == getValue(&set_map, classes[class_count - 1])) {
+            fprintf(out_file, "\t-> Metoda \"get\" nu este implementata pentru toate atributele;\n");
+            fprintf(out_file, "\t-> Metoda \"set\" este implementata.\n");
+        }
         yy_pop_state();
     }
 }
@@ -73,8 +93,6 @@ char aux[255];
         strcat(combine, " ");
         strcat(combine, name);
         put(&classes_fields[class_count], combine, 1);
-        put(&get_map, classes[class_count], 0);
-        put(&set_map, classes[class_count], 0);
         get_no[class_count]++;
         set_no[class_count]++;
     }
@@ -89,8 +107,9 @@ char aux[255];
 
     if (contains(&classes_fields[class_count], name) == 1) {
         put(&get_map, classes[class_count], getValue(&get_map, classes[class_count]) + 1);
+        printf("Class: \"%s\", Getters: \"%d\"", classes[class_count], getValue(&get_map, classes[class_count]));
     } else {
-        REJECT;
+        put(&get_map, classes[class_count], 1);
     }
 }
 
@@ -102,8 +121,9 @@ char aux[255];
 
     if (contains(&classes_fields[class_count], name) == 1) {
         put(&set_map, classes[class_count], getValue(&set_map, classes[class_count]) + 1);
+        printf("Class: \"%s\", Setters: \"%d\"", classes[class_count], getValue(&set_map, classes[class_count]));
     } else {
-        REJECT;
+        put(&set_map, classes[class_count], 1);
     }
 }
 
@@ -219,7 +239,7 @@ int main(int argc, char **argv)
 
         fprintf(out_file, "%s\n\n", classes[class_count - 1]);
 
-        printHashMap(&classes_map);
+        //printHashMap(&classes_map);
         printf("\nFields:\n");
 
         for (int i = 0; i < class_count; i++) {
