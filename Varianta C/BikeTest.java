@@ -33,6 +33,20 @@ class Bike {
     }
 }
 
+// public class Eu {
+//     private int age;
+//     private String name;
+
+//     public Eu() {
+//         age = 21;
+//         name = "Eu";
+//     }
+
+//     public int getAge() {
+//         return age;
+//     }
+// }
+
 
 class BikeFactory {
 

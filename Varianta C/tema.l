@@ -22,6 +22,7 @@ HashMap allocations;
 HashMap classes_fields[1000];
 HashMap get_map;
 HashMap set_map;
+HashMap types[1000];
 
 char classes[255][255];
 char data_type[255];
@@ -33,18 +34,34 @@ char getters_setters[255][1001];
 
 %s MAIN
 %s FIELDS
+%s PUBLIC_CLASS
 ALPHA_NUMERICAL [a-zA-Z0-9]
 
 %%
 
 "//"[^\n]* { }
 
-(""|"public")"class"[ ]+{ALPHA_NUMERICAL}+ {
+"public class" {
+    yy_push_state(PUBLIC_CLASS);
+}
+
+"class"[ ]+{ALPHA_NUMERICAL}+ {
     printf("%s", yytext);
     sscanf(yytext + 5, " %[a-zA-Z0-9]+", classes[class_count]);
     put(&classes_map, classes[class_count], 0);
     put(&get_map, classes[class_count], 0);
     put(&set_map, classes[class_count], 0);
+    yy_push_state(FIELDS);
+}
+
+<PUBLIC_CLASS>[ ]+{ALPHA_NUMERICAL}+ {
+    printf("%s", yytext);
+    sscanf(yytext, " %[a-zA-Z0-9]+", classes[class_count]);
+    put(&classes_map, classes[class_count], 0);
+    put(&get_map, classes[class_count], 0);
+    put(&set_map, classes[class_count], 0);
+    public_count++;
+    yy_pop_state();
     yy_push_state(FIELDS);
 }
 
@@ -84,12 +101,23 @@ ALPHA_NUMERICAL [a-zA-Z0-9]
 <FIELDS>"private"[ ]+{ALPHA_NUMERICAL}+(""|\[\])[ ]+{ALPHA_NUMERICAL}+[ ]* {
     printf("%s", yytext);
     char name[255];
-    char name1[255];
-    sscanf(yytext, "private %s %s", name1, name);
+    char type[255];
     char combine[255];
+
+    sscanf(yytext, "private %s %s", type, name);
     strcpy(combine, classes[class_count]);
     strcat(combine, " ");
     strcat(combine, name);
+    
+    printf("\"%s\"", combine);
+    strcat(type, " ");
+    strcat(type, classes[class_count]);
+    strcat(type, " ");
+    strcat(type, name);
+
+    printf("\"%s\"", type);
+    
+    put(&types[class_count], type, 1);
     put(&classes_fields[class_count], combine, 1);
     get_no[class_count]++;
     set_no[class_count]++;
@@ -97,12 +125,17 @@ ALPHA_NUMERICAL [a-zA-Z0-9]
 
 <FIELDS>"public"[ ]+{ALPHA_NUMERICAL}+[ ]+"get"{ALPHA_NUMERICAL}+ {
     char name[255];
-    char name1[255];
-    sscanf(yytext, "public %s get%s", name1, name);
+    char type[255];
+    sscanf(yytext, "public %s get%s", type, name);
     name[0] = tolower(name[0]);
     printf("\"%s\"", name);
 
-    if (contains(&classes_fields[class_count], name) == 1) {
+    strcat(type, " ");
+    strcat(type, classes[class_count]);
+    strcat(type, " ");
+    strcat(type, name);
+
+    if (contains(&classes_fields[class_count], name) == 1 && contains(&types[class_count], type) == 1) {
         put(&get_map, classes[class_count], getValue(&get_map, classes[class_count]) + 1);
     }
 }
@@ -215,17 +248,17 @@ int main(int argc, char **argv)
     yylex();
     printf("\n");
 
+    fprintf(out_file, "Clase %d: ", class_count);
+
+    for (int i = 0; i < class_count - 1; i++) {
+        fprintf(out_file, "%s, ", classes[i]);
+    }
+
+    fprintf(out_file, "%s\n\n", classes[class_count - 1]);
+
     if (public_count >= 2) {
-
+        fprintf(out_file, "ERROR: cannot have two public classes in the same file!\n");
     } else {
-        fprintf(out_file, "Clase %d: ", class_count);
-
-        for (int i = 0; i < class_count - 1; i++) {
-            fprintf(out_file, "%s, ", classes[i]);
-        }
-
-        fprintf(out_file, "%s\n\n", classes[class_count - 1]);
-
         for (int i = 0; i < 100; i++) {
             fprintf(out_file, "%s", instances_output[i]);
         }
