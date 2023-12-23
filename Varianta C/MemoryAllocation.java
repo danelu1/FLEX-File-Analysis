@@ -1,4 +1,16 @@
 public class MemoryAllocation {
+    private String field;
+
+    public void setField(String f) {
+        this.field = f;
+    }
+
+    // public String getField() {
+    //     return field;
+    // }
+
+
+
     public static void main(String[] args) {
         int[] intArray = new int[10];
         int[] intArray2 = new int[10];

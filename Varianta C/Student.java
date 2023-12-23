@@ -30,9 +30,9 @@ public class Student {
         Student[] studenti = new Student[10];
         Student[] grigore = new Student[13];
 
-        for (int i = 0; i < grigore.length; i++) {
-            grigore[i] = new Student();
-        }
+        // for (int i = 0; i < grigore.length; i++) {
+        //     grigore[i] = new Student();
+        // }
         Student s1 = new Student();
         Student[] andrei = new Student[3];
         Person[] persons = new Person[200];

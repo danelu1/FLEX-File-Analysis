@@ -10,7 +10,6 @@ FILE *out_file;
 
 int class_count = 0;
 int variable = 0;
-int in_main = 0;
 int brace_count = 0;
 int public_count = 0;
 int class_braces = 0;
@@ -25,21 +24,22 @@ HashMap get_map;
 HashMap set_map;
 
 char classes[255][255];
-char class_name[255];
 char data_type[255];
 char variable_name[255];
 char combination[255];
-char aux[255];
+char instances_output[255][1001];
+char getters_setters[255][1001];
 %}
 
 %s MAIN
 %s FIELDS
+ALPHA_NUMERICAL [a-zA-Z0-9]
 
 %%
 
 "//"[^\n]* { }
 
-(""|"public")"class"[ ]+[a-zA-Z0-9]+ {
+(""|"public")"class"[ ]+{ALPHA_NUMERICAL}+ {
     printf("%s", yytext);
     sscanf(yytext + 5, " %[a-zA-Z0-9]+", classes[class_count]);
     put(&classes_map, classes[class_count], 0);
@@ -57,48 +57,45 @@ char aux[255];
     printf("%s", yytext);
     class_braces--;
     if (class_braces == 0) {
+        if (get_no[class_count] == 0 && set_no[class_count] == 0) {
+            sprintf(getters_setters[class_count], "%s:\n\t-> Nu exista atribute private.\n", classes[class_count]);
+        }
+        else if (get_no[class_count] == getValue(&get_map, classes[class_count]) && set_no[class_count] == getValue(&set_map, classes[class_count])) {
+            sprintf(getters_setters[class_count], "%s:\n\t-> \"get\" si \"set\" sunt implementate.\n", classes[class_count]);
+        }
+        else if (get_no[class_count] > getValue(&get_map, classes[class_count]) && set_no[class_count] > getValue(&set_map, classes[class_count])) {
+            sprintf(getters_setters[class_count], "%s:\n\t-> Metoda \"get\" nu este implementata pentru toate atributele;\n", classes[class_count]);
+            strcat(getters_setters[class_count], "\t-> Metoda \"set\" nu este implementata pentru toate atributele.\n");
+        }
+        else if (get_no[class_count] == getValue(&get_map, classes[class_count]) && set_no[class_count] > getValue(&set_map, classes[class_count])) {
+            sprintf(getters_setters[class_count], "%s:\n\t-> Metoda \"get\" este implementata;\n", classes[class_count]);
+            strcat(getters_setters[class_count], "\t-> Metoda \"set\" nu este implementata pentru toate atributele.\n");
+        }
+        else if (get_no[class_count] > getValue(&get_map, classes[class_count]) && set_no[class_count] == getValue(&set_map, classes[class_count])) {
+            sprintf(getters_setters[class_count], "%s:\n\t-> Metoda \"get\" nu este implementata pentru toate atributele;\n", classes[class_count]);
+            strcat(getters_setters[class_count], "\t-> Metoda \"set\" este implementata.\n");
+        }
+
         class_count++;
-        fprintf(out_file, "%s:\n", classes[class_count - 1]);
-        if (get_no[class_count - 1] == 0 && set_no[class_count - 1] == 0) {
-            fprintf(out_file, "\t-> Nu exista atribute private.\n");
-        }
-        else if (get_no[class_count - 1] == getValue(&get_map, classes[class_count - 1]) && set_no[class_count - 1] == getValue(&set_map, classes[class_count - 1])) {
-            fprintf(out_file, "\t-> \"get\" si \"set\" sunt implementate.\n");
-        }
-        else if (get_no[class_count - 1] > getValue(&get_map, classes[class_count - 1]) && set_no[class_count - 1] > getValue(&set_map, classes[class_count - 1])) {
-            fprintf(out_file, "\t-> Metoda \"get\" nu este implementata pentru toate atributele;\n");
-            fprintf(out_file, "\t-> Metoda \"set\" nu este implementata pentru toate atributele.\n");
-        }
-        else if (get_no[class_count - 1] == getValue(&get_map, classes[class_count - 1]) && set_no[class_count - 1] > getValue(&set_map, classes[class_count - 1])) {
-            fprintf(out_file, "\t-> Metoda \"get\" este implementata;\n");
-            fprintf(out_file, "\t-> Metoda \"set\" nu este implementata pentru toate atributele.\n");
-        }
-        else if (get_no[class_count - 1] > getValue(&get_map, classes[class_count - 1]) && set_no[class_count - 1] == getValue(&set_map, classes[class_count - 1])) {
-            fprintf(out_file, "\t-> Metoda \"get\" nu este implementata pentru toate atributele;\n");
-            fprintf(out_file, "\t-> Metoda \"set\" este implementata.\n");
-        }
         yy_pop_state();
     }
 }
 
-<FIELDS>"private"[ ]+[a-zA-Z0-9]+(""|\[\])[ ]+[a-zA-Z0-9]+[ ]* {
+<FIELDS>"private"[ ]+{ALPHA_NUMERICAL}+(""|\[\])[ ]+{ALPHA_NUMERICAL}+[ ]* {
     printf("%s", yytext);
     char name[255];
     char name1[255];
-    if (in_main == 0) {
-        sscanf(yytext, "private %s %s", name1, name);
-        printf("\"%s\"", name);
-        char combine[255];
-        strcpy(combine, classes[class_count]);
-        strcat(combine, " ");
-        strcat(combine, name);
-        put(&classes_fields[class_count], combine, 1);
-        get_no[class_count]++;
-        set_no[class_count]++;
-    }
+    sscanf(yytext, "private %s %s", name1, name);
+    char combine[255];
+    strcpy(combine, classes[class_count]);
+    strcat(combine, " ");
+    strcat(combine, name);
+    put(&classes_fields[class_count], combine, 1);
+    get_no[class_count]++;
+    set_no[class_count]++;
 }
 
-<FIELDS>"public"[ ]+[a-zA-Z0-9]+[ ]+"get"[a-zA-Z0-9]+ {
+<FIELDS>"public"[ ]+{ALPHA_NUMERICAL}+[ ]+"get"{ALPHA_NUMERICAL}+ {
     char name[255];
     char name1[255];
     sscanf(yytext, "public %s get%s", name1, name);
@@ -107,13 +104,10 @@ char aux[255];
 
     if (contains(&classes_fields[class_count], name) == 1) {
         put(&get_map, classes[class_count], getValue(&get_map, classes[class_count]) + 1);
-        printf("Class: \"%s\", Getters: \"%d\"", classes[class_count], getValue(&get_map, classes[class_count]));
-    } else {
-        put(&get_map, classes[class_count], 1);
     }
 }
 
-<FIELDS>"public void set"[a-zA-Z0-9]+ {
+<FIELDS>"public void set"{ALPHA_NUMERICAL}+ {
     char name[255];
     sscanf(yytext, "public void set%[a-zA-Z0-9]+", name);
     name[0] = tolower(name[0]);
@@ -121,37 +115,37 @@ char aux[255];
 
     if (contains(&classes_fields[class_count], name) == 1) {
         put(&set_map, classes[class_count], getValue(&set_map, classes[class_count]) + 1);
-        printf("Class: \"%s\", Setters: \"%d\"", classes[class_count], getValue(&set_map, classes[class_count]));
-    } else {
-        put(&set_map, classes[class_count], 1);
     }
 }
 
 "public static void main(String[] args)" {
     printf("%s", yytext);
-    in_main = 1;
     yy_push_state(MAIN);
 }
 
 <MAIN>\{ {
     printf("%s", yytext);
-    if (in_main == 1) {
-        brace_count++;
-    }
+    brace_count++;
 }
 
 <MAIN>\} {
-    printf("%s", yytext);
-    if(in_main == 1) {
-        --brace_count;
-        if(brace_count == 0) {
-            in_main = 0;
-            yy_pop_state();
+    brace_count--;
+    if(brace_count == 0) {
+        printf("\"%s\"", yytext);
+        for (int i = 0; i < 100; i++) {
+            Node *current = classes_map.buckets[i];
+            while (current != NULL)
+            {
+                sprintf(instances_output[i], "Obiect %s: %d\n", current->data.key, getValue(&classes_map, current->data.key));
+                current = current->next;
+            }
         }
+
+        yy_pop_state();
     }
 }
 
-<MAIN>[ \t]*[a-zA-Z0-9]+[\[\] ]+[a-zA-Z0-9]+[ ]*\=[ ]*"new"[ ]+[a-zA-Z0-9]+\[[0-9]+\]\; {
+<MAIN>[ \t]*{ALPHA_NUMERICAL}+[\[\] ]+{ALPHA_NUMERICAL}+[ ]*\=[ ]*"new"[ ]+{ALPHA_NUMERICAL}+\[[0-9]+\]\; {
     printf("%s", yytext);
 
     sscanf(yytext, " %[a-zA-Z0-9][] %s", data_type, variable_name);
@@ -164,29 +158,22 @@ char aux[255];
     put(&allocations, combination, variable);
 }
 
-<MAIN>[ \t]*[a-zA-Z0-9]+[ ]+[a-zA-Z0-9]+[ ]*\=[ ]*"new"[ ]+[a-zA-Z0-9]+ {
+<MAIN>[ \t]*{ALPHA_NUMERICAL}+[ ]+{ALPHA_NUMERICAL}+[ ]*\=[ ]*"new"[ ]+{ALPHA_NUMERICAL}+ {
     printf("%s", yytext);
-
     sscanf(yytext, " %[a-zA-Z0-9] %s", data_type, variable_name);
 
     strcpy(combination, data_type);
     strcat(combination, " ");
     strcat(combination, variable_name);
 
-    if (getValue(&allocations, combination) == -1) {
-        put(&allocations, combination, 1);
-    } else {
-        put(&allocations, combination, getValue(&allocations, combination) + 1);
-    }
-
-    if (contains(&classes_map, data_type) == 0) {
-        put(&classes_map, data_type, 1);
-    } else {
+    if (contains(&classes_map, data_type) == 1) {
         put(&classes_map, data_type, getValue(&classes_map, data_type) + 1);
+    } else {
+        put(&classes_map, data_type, 1);
     }
 }
 
-<MAIN>[ \t]*[a-zA-Z0-9]+\[[a-zA-Z0-9]+\][ ]*\=[ ]*"new"[ ]+[a-zA-Z0-9]+  {
+<MAIN>[ \t]*{ALPHA_NUMERICAL}+\[{ALPHA_NUMERICAL}+\][ ]*\=[ ]*"new"[ ]+{ALPHA_NUMERICAL}+  {
     printf("%s", yytext);
     char name[255];
     sscanf(yytext, " %[a-zA-Z0-9]+[[a-zA-Z0-9]+][ ]*=", name);
@@ -219,7 +206,7 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    out_file = fopen("f.out", "w");
+    out_file = fopen("file.out", "w");
     if (!out_file) {
         fprintf(stderr, "Error opening output file: f.out\n");
         exit(1);
@@ -239,21 +226,8 @@ int main(int argc, char **argv)
 
         fprintf(out_file, "%s\n\n", classes[class_count - 1]);
 
-        //printHashMap(&classes_map);
-        printf("\nFields:\n");
-
-        for (int i = 0; i < class_count; i++) {
-            printHashMap(&classes_fields[i]);
-        }
-
-        printf("\nSet map:\n\n");
-        printHashMap(&set_map);
-        printf("\nGet map:\n\n");
-        printHashMap(&get_map);
-        printf("\n\n");
-
-        for (int i = 0; i < class_count; i++) {
-            fprintf(out_file, "Obiect %s: %d\n", classes[i], getValue(&classes_map, classes[i]));
+        for (int i = 0; i < 100; i++) {
+            fprintf(out_file, "%s", instances_output[i]);
         }
 
         fprintf(out_file, "\n");
@@ -261,30 +235,7 @@ int main(int argc, char **argv)
         printf("\n");
 
         for (int i = 0; i < class_count; i++) {
-            printf("Class %s has %d private members\n", classes[i], get_no[i]);
-        }
-
-        for (int i = 0; i < class_count; i++) {
-            fprintf(out_file, "%s:\n", classes[i]);
-
-            if (get_no[i] == 0 && set_no[i] == 0) {
-                fprintf(out_file, "\t-> Nu exista atribute private.\n");
-            }
-            else if (get_no[i] == getValue(&get_map, classes[i]) && set_no[i] == getValue(&set_map, classes[i])) {
-                fprintf(out_file, "\t-> \"get\" si \"set\" sunt implementate.\n");
-            }
-            else if (get_no[i] > getValue(&get_map, classes[i]) && set_no[i] > getValue(&set_map, classes[i])) {
-                fprintf(out_file, "\t-> Metoda \"get\" nu este implementata pentru toate atributele;\n");
-                fprintf(out_file, "\t-> Metoda \"set\" nu este implementata pentru toate atributele.\n");
-            }
-            else if (get_no[i] == getValue(&get_map, classes[i]) && set_no[i] > getValue(&set_map, classes[i])) {
-                fprintf(out_file, "\t-> Metoda \"get\" este implementata;\n");
-                fprintf(out_file, "\t-> Metoda \"set\" nu este implementata pentru toate atributele.\n");
-            }
-            else if (get_no[i] > getValue(&get_map, classes[i]) && set_no[i] == getValue(&set_map, classes[i])) {
-                fprintf(out_file, "\t-> Metoda \"get\" nu este implementata pentru toate atributele;\n");
-                fprintf(out_file, "\t-> Metoda \"set\" este implementata.\n");
-            }
+            fprintf(out_file, "%s", getters_setters[i]);
         }
     }
 
