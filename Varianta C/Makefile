@@ -1,4 +1,4 @@
-iake:
+build:
 	flex tema.l
 	gcc lex.yy.c -o tema -lfl
 
