@@ -1,71 +1,153 @@
 %{
 #include <stdio.h>
+
+int brackets = 0;
 %}
 
-%s NEXT
-%s NEXT1
-%s NEXT2
-%s IGNORE_BRACKET_COMMA
+%option stack
+
+%s ARTICLE INPROCEEDINGS BOOK
 %s IGNORE_NON_FIELDS
-%s NEXT_STATE
+%s EXTRACT_INFO_TITLE EXTRACT_INFO
+%s OTHER_RECORDINGS
 
 %%
 
-"%"[^\n]*[\n{1,}]|"%"[^\n]* { }
-"=" { }
-\{[a-zA-Z0-9]*\,\n { }
+"%"[^\n]*[\n]* { }
 \{|\} { }
-\},[\n{1,}]|\,[\n{1,}]|\}[\n{1, }] { printf("\n"); }
-\n{2,} { }
+\n{2,} { printf("\n"); }
 
-@[aA][rR][tT][iI][cC][lL][eE] { printf("Articol in revista:\n"); }
 
-@[bB][oO][oO][kK] { printf("Carte:\n"); }
+@[aA][rR][tT][iI][cC][lL][eE][ \t]*\{[ \t]*[a-zA-Z0-9]+[ \t]*\,[ \t]*[\n]+ {
+    printf("Articol in revista:\n");
+    brackets++;
+    yy_push_state(ARTICLE);
+}
 
-@[iI][nN][pP][rR][oO][cC][eE][eE][dD][iI][nN][gG][sS] { printf("Articol la conferinta:\n"); }
+@[bB][oO][oO][kK][ \t]*\{[ \t]*[a-zA-Z0-9]+[ \t]*\,[ \t]*[\n]+ {
+    printf("Carte:\n");
+    brackets++;
+    yy_push_state(BOOK);
+}
 
-"title"[ ]*\=[ ]*\{ { printf("\tTitlu: "); BEGIN (NEXT); }
+@[iI][nN][pP][rR][oO][cC][eE][eE][dD][iI][nN][gG][sS][ \t]*\{[ \t]*[a-zA-Z0-9]+[ \t]*\,[ \t]*[\n]+ {
+    printf("Articol la conferinta:\n");
+    brackets++;
+    yy_push_state(INPROCEEDINGS);
+}
 
-"author"[ ]*\=[ ]*\{ { printf("\tAutori: "); BEGIN (NEXT1); }
+@[a-zA-Z0-9]+[ \t]*\{[ \t]*[a-zA-Z0-9]+[ \t]*\,[ \t]*[\n]+ {
+    yy_push_state(OTHER_RECORDINGS);
+}
 
-"journal"[ ]*\=[ ]*\{|[ ]*\= { printf("\tRevista: "); BEGIN (NEXT1); }
+<OTHER_RECORDINGS>[^\n]+\n {
+    yy_pop_state();
+}
 
-"year"[ ]*\=[ ]*\{ { printf("\tAn: "); BEGIN (NEXT1); }
+"title"[ \t]*\=[ \t]* {
+    printf("\tTitlu: ");
+    yy_push_state(EXTRACT_INFO_TITLE);
+}
 
-"year"[ ]*\=[ ]* { printf("\tAn: "); BEGIN(NEXT2); }
+"author"[ \t]*\=[ \t]* {
+    printf("\tAutor: ");
+    yy_push_state(EXTRACT_INFO);
+}
 
-"volume"[ ]*\=[ ]*\{ { printf("\tVolum: "); BEGIN (NEXT1); }
+"journal"[ \t]*\=[ \t]* {
+    printf("\tRevista: ");
+    yy_push_state(EXTRACT_INFO);
+}
 
-"volume"[ ]*\=[ ]* { printf("\tVolum: "); BEGIN (NEXT2); }
+<ARTICLE>"booktitle"[ ]*\=[ ]* {
+    printf("\tCarte: ");
+    yy_push_state(EXTRACT_INFO);
+}
 
-"publisher"[ ]*\=[ ]*\{ { printf("\tEditura: "); BEGIN (NEXT1); }
+<BOOK>"booktitle"[ ]*\=[ ]* {
+    printf("\tCarte: ");
+    yy_push_state(EXTRACT_INFO);
+}
 
-"number"[ ]*\=[ ]*\{ { printf("\tVersiune: "); BEGIN (NEXT1); }
+<INPROCEEDINGS>"booktitle"[ ]*\=[ ]* {
+    printf("\tConferinta: ");
+    yy_push_state(EXTRACT_INFO);
+}
 
-"number"[ ]*\=[ ]* { printf("\tVersiune: "); BEGIN (NEXT2); }
+"year"[ \t]*\=[ \t]* {
+    printf("\tAnul publicarii: ");
+    yy_push_state(EXTRACT_INFO);
+}
 
-"pages"[ ]*\=[ ]*\{ { printf("\tPagini resursa: "); BEGIN (NEXT1); }
+"doi"[ \t]*\=[ \t]* {
+    printf("\tDOI: ");
+    yy_push_state(EXTRACT_INFO);
+}
 
-"doi"[ ]*\=[ ]*\{ { printf("\tDOI: "); BEGIN (NEXT1); }
+"organization"[ \t]*\=[ \t]* {
+    printf("\tOrganizatie: ");
+    yy_push_state(EXTRACT_INFO);
+}
 
-"booktitle"[ ]*\=[ ]*\{ { printf("\tTitlu revista: "); BEGIN (NEXT1); }
+"number"[ \t]*\=[ \t]* {
+    printf("\tNumar versiune: ");
+    yy_push_state(EXTRACT_INFO);
+}
 
-"organization"[ ]*\=[ ]*\{ { printf("\tOrganizatie: "); BEGIN (NEXT1); }
+"pages"[ \t]*\=[ \t]* {
+    printf("\tPagini: ");
+    yy_push_state(EXTRACT_INFO);
+}
 
-<NEXT>[^}]+ { printf("\"%s\"", yytext); BEGIN (IGNORE_BRACKET_COMMA); }
+"volume"[ \t]*\=[ \t]* {
+    printf("\tVolum: ");
+    yy_push_state(EXTRACT_INFO);
+}
 
-<NEXT1>[^}]+ { printf("%s", yytext); BEGIN (IGNORE_BRACKET_COMMA); }
+"publisher"[ \t]*\=[ \t]* {
+    printf("\tEditura: ");
+    yy_push_state(EXTRACT_INFO);
+}
 
-<NEXT2>[^\,]+ { printf("%s", yytext); BEGIN (IGNORE_BRACKET_COMMA); }
+[a-zA-Z0-9]+[ \t]*\=[ \t]* { 
+    yy_push_state(IGNORE_NON_FIELDS);
+}
 
-<IGNORE_BRACKET_COMMA>\, { printf("%s", yytext + 1); }
+<IGNORE_NON_FIELDS>[^\n]+\n { 
+    yy_pop_state();
+}
 
-[a-zA-Z]+[ ]*\=[ ]*\{ { BEGIN (IGNORE_NON_FIELDS); }
-[a-zA-Z]+[ ]*\=[ ]* { BEGIN (IGNORE_NON_FIELDS); }
+<EXTRACT_INFO>\{[^}]+\}\, {
+    yytext[yyleng - 2] = '\0';
+    printf("%s", yytext + 1);
+    yy_pop_state();
+}
 
-<IGNORE_NON_FIELDS>[^}] { }
+<EXTRACT_INFO>[0-9]+\, {
+    yytext[yyleng - 1] = '\0';
+    printf("%s", yytext);
+    yy_pop_state();
+}
 
-@[a-zA-Z]+ { }
+<EXTRACT_INFO>\{[^}]+\}\n\} {
+    yytext[yyleng - 3] = '\0';
+    printf("%s\n", yytext + 1);
+    yy_pop_state();
+    yy_pop_state();
+}
+
+<EXTRACT_INFO>[0-9]+[ \t]*\n\} {
+    yytext[yyleng - 3] = '\0';
+    printf("%s\n", yytext + 1);
+    yy_pop_state();
+    yy_pop_state();
+}
+
+<EXTRACT_INFO_TITLE>\{[^}]+\}\, {
+    yytext[yyleng - 2] = '\0';
+    printf("\"%s\"", yytext + 1);
+    yy_pop_state();
+}
 
 %%
 
