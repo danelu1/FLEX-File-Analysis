@@ -1,3 +1,5 @@
+/* Sprincenatu Bogdan-Andrei 332CC */
+
 %{
 #include <stdio.h>
 %}
@@ -5,138 +7,193 @@
 %option stack
 
 %s ARTICLE INPROCEEDINGS BOOK
-%s IGNORE_NON_FIELDS
+%s IGNORE_OTHER_FIELDS
 %s EXTRACT_INFO_TITLE EXTRACT_INFO
 %s OTHER_RECORDINGS
 
+alpha_numerical [a-zA-Z0-9]
+numerical [0-9]
+whitespace [ \t]
+newline \n
+newlines {whitespace}*{newline}+
+line [^\n]+
+
+comment "%"[^\n]*[\n]*
+article [aA][rR][tT][iI][cC][lL][eE]{whitespace}*
+book [bB][oO][oO][kK]{whitespace}*
+inproceedings [iI][nN][pP][rR][oO][cC][eE][eE][dD][iI][nN][gG][sS]{whitespace}*
+other_recording {alpha_numerical}+{whitespace}*
+citation [a-zA-Z0-9\'\"-]
+label {whitespace}*{citation}+{whitespace}*
+value [^}]+
+
+title {whitespace}*"title"{whitespace}*\={whitespace}*
+publisher {whitespace}*"publisher"{whitespace}*\={whitespace}*
+author {whitespace}*"author"{whitespace}*\={whitespace}*
+booktitle {whitespace}*"booktitle"{whitespace}*\={whitespace}*
+doi {whitespace}*"doi"{whitespace}*\={whitespace}*
+organization {whitespace}*"organization"{whitespace}*\={whitespace}*
+pages {whitespace}*"pages"{whitespace}*\={whitespace}*
+number {whitespace}*"number"{whitespace}*\={whitespace}*
+volume {whitespace}*"volume"{whitespace}*\={whitespace}*
+year {whitespace}*"year"{whitespace}*\={whitespace}*
+journal {whitespace}*"journal"{whitespace}*\={whitespace}*
+other_field {whitespace}*[a-zA-Z0-9\-\_:\t.;\'\" ]+{whitespace}*\={whitespace}*
+
 %%
 
-"%"[^\n]*[\n]* { }
-\{|\} { }
-\n{2,} { printf("\n"); }
+{comment} { /*Ignoram comentariile*/ }
+\{|\} { /*Ignoram acoladele*/ }
+\n{2,} {
+    // Inlocuim toate grupurile de cel putin 2 "\n" cu unul singur.
+    printf("\n");
+}
 
 
-@[aA][rR][tT][iI][cC][lL][eE][ \t]*\{[ \t]*[a-zA-Z0-9]+[ \t]*\,[ \t]*[\n]+ {
+@{article}\{{label}\,{newlines} {
+    // Am gasit un articol, printam mesajul corespunzator si
+    // ne ducem la starea "ARTICLE"(in interiorul lui).
+    // La fel facem si pentru restul tipurilor.
     printf("Articol in revista:\n");
     yy_push_state(ARTICLE);
 }
 
-@[bB][oO][oO][kK][ \t]*\{[ \t]*[a-zA-Z0-9]+[ \t]*\,[ \t]*[\n]+ {
+@{book}\{{label}\,{newlines} {
     printf("Carte:\n");
     yy_push_state(BOOK);
 }
 
-@[iI][nN][pP][rR][oO][cC][eE][eE][dD][iI][nN][gG][sS][ \t]*\{[ \t]*[a-zA-Z0-9]+[ \t]*\,[ \t]*[\n]+ {
+@{inproceedings}\{{label}\,{newlines} {
     printf("Articol la conferinta:\n");
     yy_push_state(INPROCEEDINGS);
 }
 
-@[a-zA-Z0-9]+[ \t]*\{[ \t]*[a-zA-Z0-9]+[ \t]*\,[ \t]*[\n]+ { yy_push_state(OTHER_RECORDINGS); }
+@{other_recording}\{{label}\,{newlines} {
+    // Am gasit alta inregistrare => punem pe stiva
+    // starea care se ocupa cu ignorarea ei.
+    yy_push_state(OTHER_RECORDINGS); 
+}
 
-<OTHER_RECORDINGS>[^\n]+\n { }
+<OTHER_RECORDINGS>{line}{newline}+ { /*Ignoram fiecare linie*/ }
 
-<OTHER_RECORDINGS>\}(""|\,)\n[ \t]*\} { yy_pop_state(); }
+<OTHER_RECORDINGS>(\}|{numerical}+)(""|\,){newlines}{whitespace}*\} { 
+    // Am ajuns la finalul inregistrarii => scoatem starea
+    // curenta de pe stiva.
+    yy_pop_state(); 
+}
 
-<OTHER_RECORDINGS>[0-9]+(""|\,)\n[ \t]*\} { yy_pop_state(); }
 
-[ \t]*"title"[ \t]*\=[ \t]* {
+{title} {
+    // Am gasit campul "title" => printam un mesaj corespunzator
+    // dupa care punem pe stiva starea "EXTRACT_INFO_TITLE".
     printf("\tTitlu: ");
     yy_push_state(EXTRACT_INFO_TITLE);
 }
 
-[ \t]*"author"[ \t]*\=[ \t]* {
+{author} {
+    // Am gasit campul "author" => printam un mesaj corespunzator
+    // dupa care punem pe stiva starea "EXTRACT_INFO"
+    // La fel si pentru restul campurilor din enunt.
     printf("\tAutor: ");
     yy_push_state(EXTRACT_INFO);
 }
 
-[ \t]*"journal"[ \t]*\=[ \t]* {
+{journal} {
     printf("\tRevista: ");
     yy_push_state(EXTRACT_INFO);
 }
 
-<ARTICLE>[ \t]*"booktitle"[ ]*\=[ ]* {
+<ARTICLE>{booktitle} {
     printf("\tCarte: ");
     yy_push_state(EXTRACT_INFO);
 }
 
-<BOOK>[ \t]*"booktitle"[ ]*\=[ ]* {
+<BOOK>{booktitle} {
     printf("\tCarte: ");
     yy_push_state(EXTRACT_INFO);
 }
 
-<INPROCEEDINGS>[ \t]*"booktitle"[ ]*\=[ ]* {
+<INPROCEEDINGS>{booktitle} {
     printf("\tConferinta: ");
     yy_push_state(EXTRACT_INFO);
 }
 
-[ \t]*"year"[ \t]*\=[ \t]* {
+{year} {
     printf("\tAnul publicarii: ");
     yy_push_state(EXTRACT_INFO);
 }
 
-[ \t]*"doi"[ \t]*\=[ \t]* {
+{doi} {
     printf("\tDOI: ");
     yy_push_state(EXTRACT_INFO);
 }
 
-[ \t]*"organization"[ \t]*\=[ \t]* {
+{organization} {
     printf("\tOrganizatie: ");
     yy_push_state(EXTRACT_INFO);
 }
 
-[ \t]*"number"[ \t]*\=[ \t]* {
+{number} {
     printf("\tNumar versiune: ");
     yy_push_state(EXTRACT_INFO);
 }
 
-[ \t]*"pages"[ \t]*\=[ \t]* {
+{pages} {
     printf("\tPagini: ");
     yy_push_state(EXTRACT_INFO);
 }
 
-[ \t]*"volume"[ \t]*\=[ \t]* {
+{volume} {
     printf("\tVolum: ");
     yy_push_state(EXTRACT_INFO);
 }
 
-[ \t]*"publisher"[ \t]*\=[ \t]* {
+{publisher} {
     printf("\tEditura: ");
     yy_push_state(EXTRACT_INFO);
 }
 
-[ \t]*[a-zA-Z0-9]+[ \t]*\=[ \t]* { yy_push_state(IGNORE_NON_FIELDS); }
+{other_field} {
+    // Am gasit un camp diferit de cele din enunt => il ignoram
+    // si punem pe stiva starea "IGNORE_OTHER_FIELDS".
+    yy_push_state(IGNORE_OTHER_FIELDS); 
+}
 
-<IGNORE_NON_FIELDS>[^\n]+\n { yy_pop_state(); }
+<IGNORE_OTHER_FIELDS>{numerical}+(""|\,){newlines}|\{{value}\}(""|\,){newlines} {
+    // Ignoram in totalitate campul curent(tot ce se afla intre "{"
+    // si "}", plus "\n"-urile ce ar putea fi), dupa care scoatem
+    // starea de pe stiva.
+    yy_pop_state(); 
+}
 
-<EXTRACT_INFO>\{[^}]+\}\, {
+
+<EXTRACT_INFO_TITLE>\{{value}\}\, {
+    // Extragem titlul inregistrarii.
+    yytext[yyleng - 2] = '\0';
+    printf("\"%s\"", yytext + 1);
+    yy_pop_state();
+}
+
+<EXTRACT_INFO>\{{value}\}\, {
+    // Extragem "valoarea" inregistrarii.
+    // Similar si pentru formatul numerelor.
     yytext[yyleng - 2] = '\0';
     printf("%s", yytext + 1);
     yy_pop_state();
 }
 
-<EXTRACT_INFO>[0-9]+\, {
+<EXTRACT_INFO>{numerical}+\, {
     yytext[yyleng - 1] = '\0';
     printf("%s", yytext);
     yy_pop_state();
 }
 
-<EXTRACT_INFO>\{[^}]+\}\n\} {
+<EXTRACT_INFO>(\{{value}\}|{numerical}+){newlines}\} {
+    // Extragem ultima "valoare", dupa care scoatem ultimele
+    // 2 stari salvate pe stiva(am terminat inregistrarea).
     yytext[yyleng - 3] = '\0';
     printf("%s\n", yytext + 1);
     yy_pop_state();
-    yy_pop_state();
-}
-
-<EXTRACT_INFO>[0-9]+[ \t]*\n\} {
-    yytext[yyleng - 3] = '\0';
-    printf("%s\n", yytext + 1);
-    yy_pop_state();
-    yy_pop_state();
-}
-
-<EXTRACT_INFO_TITLE>\{[^}]+\}\, {
-    yytext[yyleng - 2] = '\0';
-    printf("\"%s\"", yytext + 1);
     yy_pop_state();
 }
 

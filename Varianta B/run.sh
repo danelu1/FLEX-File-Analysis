@@ -1,3 +1,5 @@
+# Sprincenatu Bogdan-Andrei 332CC
+
 #!/bin/bash
 
 tests="./tests"
