@@ -324,7 +324,7 @@ instances_found "new"[ ]+{ALPHA_NUMERICAL}+\(
     // tipul de date initial de la care am plecat(Tip[] nume = new Tip[nr]),
     // atunci trecem la starea urmatoare. In caz contrar, ne oprim aici si
     // scoatem ultimele 2 stari adaugate pe stiva.
-    if (strstr(type_aux, data_type)) {
+    if (strcmp(type_aux, data_type) == 0) {
         yy_push_state(FIND_ALLOCATIONS);
     } else {
         combination[0] = '\0';
@@ -382,7 +382,8 @@ instances_found "new"[ ]+{ALPHA_NUMERICAL}+\(
 
 <MAIN>{array_instantiation} {
     // In cazul unei instantieri pentru array, retin numele array-ului si trec
-    // mai depare la starea responsabila cu gestionarea numarului de instante.
+    // mai depare la starea responsabila cu gestionarea numarului de instante,
+    // doar daca numele acestuia se afla in dictionarul de alocari.
     yytext[yyleng - 2] = '\0';
     strcpy(variable_name, yytext);
     
@@ -400,18 +401,15 @@ instances_found "new"[ ]+{ALPHA_NUMERICAL}+\(
     // Extragem numarul de alocari in functie de numele array-ului.
     int x = getValue(&allocations, variable_name);
 
-    // In cazul in care gasim numele in dictionarul cu alocari cautam cheia ce contine
-    // acest nume, pentru care extragem doar primul cuvant, acesta reprezentand tipul
-    // de date(clasa). Verificam sa avem acelasi tip de date si adaugam in dictionarul
-    // pentru instantieri clasa impreuna cu noua valoare.
-    if (contains(&allocations, variable_name) == 1) {
-        char *key = getKeyByWord(&allocations, variable_name);
-        char *class = strtok(key, " ");
-        printf("\"%s\"", class);
-        
-        if (strstr(type_aux, class)) {
-            put(&classes_map, class, getValue(&classes_map, class) + x);
-        }
+    // Cautam cheia ce contine numele array-ului, pentru care extragem doar primul
+    // cuvant, acesta reprezentand tipul de date(clasa). Verificam sa avem acelasi
+    // tip de date si adaugam in dictionarul pentru instantieri clasa impreuna cu
+    // noua valoare.
+    char *key = getKeyByWord(&allocations, variable_name);
+    char *class = strtok(key, " ");
+    
+    if (strcmp(type_aux, class) == 0) {
+        put(&classes_map, class, getValue(&classes_map, class) + x);
     }
 
     variable_name[0] = '\0';

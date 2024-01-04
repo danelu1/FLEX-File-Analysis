@@ -65,25 +65,6 @@ void insert(HashMap *map, const char *key, int value)
     map->buckets[index] = newNode;
 }
 
-// Function to retrieve the value associated with a key
-int get(HashMap *map, const char *key)
-{
-    unsigned int index = hashFunction(key);
-    Node *current = map->buckets[index];
-
-    // Traverse the linked list at the given index
-    while (current != NULL)
-    {
-        if (strcmp(current->data.key, key) == 0)
-        {
-            return current->data.value; // Key found, return the associated value
-        }
-        current = current->next;
-    }
-
-    return -1; // Key not found
-}
-
 void put(HashMap *map, const char *key, int value)
 {
     unsigned int index = hashFunction(key);
@@ -105,40 +86,6 @@ void put(HashMap *map, const char *key, int value)
     insert(map, key, value);
 }
 
-// Function to delete a key-value pair from the hashmap
-void delete(HashMap *map, const char *key)
-{
-    unsigned int index = hashFunction(key);
-    Node *current = map->buckets[index];
-    Node *prev = NULL;
-
-    // Traverse the linked list at the given index
-    while (current != NULL)
-    {
-        if (strcmp(current->data.key, key) == 0)
-        {
-            // Found the key, remove the node from the list
-            if (prev == NULL)
-            {
-                // The node is the first in the list
-                map->buckets[index] = current->next;
-            }
-            else
-            {
-                prev->next = current->next;
-            }
-
-            // Free memory allocated for key and node
-            free(current->data.key);
-            free(current);
-            return;
-        }
-
-        prev = current;
-        current = current->next;
-    }
-}
-
 int contains(HashMap *map, const char *word)
 {
     for (int i = 0; i < TABLE_SIZE; ++i)
@@ -146,24 +93,28 @@ int contains(HashMap *map, const char *word)
         Node *current = map->buckets[i];
         while (current != NULL)
         {
-            if (strstr(current->data.key, word) != NULL)
+            char *text = strstr(current->data.key, word);
+            if (text != NULL && ((text + strlen(word))[0] == ' ' || (text + strlen(word))[0] == '\0'))
             {
                 return 1;
             }
+
             current = current->next;
         }
     }
+
     return 0;
 }
 
-int getValue(HashMap *map, const char *word)
+int getValue(HashMap *map, char *word)
 {
     for (int i = 0; i < TABLE_SIZE; ++i)
     {
         Node *current = map->buckets[i];
         while (current != NULL)
         {
-            if (strstr(current->data.key, word) != NULL)
+            char *text = strstr(current->data.key, word);
+            if (text != NULL && ((text + strlen(word))[0] == ' ' || (text + strlen(word))[0] == '\0'))
             {
                 return current->data.value;
             }
@@ -188,32 +139,4 @@ char *getKeyByWord(const HashMap *map, const char *word)
         }
     }
     return NULL;
-}
-
-void destroyHashMap(HashMap *map)
-{
-    for (int i = 0; i < TABLE_SIZE; ++i)
-    {
-        Node *current = map->buckets[i];
-        while (current != NULL)
-        {
-            Node *next = current->next;
-            free(current->data.key);
-            free(current);
-            current = next;
-        }
-    }
-}
-
-void printHashMap(HashMap *map)
-{
-    for (int i = 0; i < TABLE_SIZE; ++i)
-    {
-        Node *current = map->buckets[i];
-        while (current != NULL)
-        {
-            printf("Key: \"%s\", Value: %d\n", current->data.key, current->data.value);
-            current = current->next;
-        }
-    }
 }

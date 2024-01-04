@@ -56,7 +56,13 @@ class BikeFactory {
 public class BikeTest {
     public static void main(String[] args) { int bikesNo;
         BikeFactory factory = new BikeFactory(10);
-    }
+        Bike b = new Bike(null, null, 10);
+        Bike b1 = new Bike(null, null, 14);
+        Bike[] bikes = new Bike[15];
 
+        for (int i = 0; i < bikes.length; i++) {
+            bikes[i] = new Bike(null, null, 200);
+        }
+    }
 }
 
