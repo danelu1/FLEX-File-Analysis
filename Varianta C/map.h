@@ -148,12 +148,12 @@ int contains(HashMap *map, const char *word)
         {
             if (strstr(current->data.key, word) != NULL)
             {
-                return 1; // Word is found in one of the keys
+                return 1;
             }
             current = current->next;
         }
     }
-    return 0; // Word is not found
+    return 0;
 }
 
 int getValue(HashMap *map, const char *word)
@@ -165,12 +165,12 @@ int getValue(HashMap *map, const char *word)
         {
             if (strstr(current->data.key, word) != NULL)
             {
-                return current->data.value; // Return the value associated with the key
+                return current->data.value;
             }
             current = current->next;
         }
     }
-    return -1; // Key with the specified word is not found
+    return -1;
 }
 
 char *getKeyByWord(const HashMap *map, const char *word)
@@ -180,7 +180,6 @@ char *getKeyByWord(const HashMap *map, const char *word)
         Node *current = map->buckets[i];
         while (current != NULL)
         {
-            // Check if the given word is present in the current key
             if (strstr(current->data.key, word) != NULL)
             {
                 return current->data.key;
@@ -188,11 +187,9 @@ char *getKeyByWord(const HashMap *map, const char *word)
             current = current->next;
         }
     }
-    // Return NULL if the word is not found in any key
     return NULL;
 }
 
-// Function to free the memory allocated for the hashmap
 void destroyHashMap(HashMap *map)
 {
     for (int i = 0; i < TABLE_SIZE; ++i)

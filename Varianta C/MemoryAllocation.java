@@ -1,25 +1,11 @@
 public class MemoryAllocation {
-    private String field;
-
-    public void setField(String f) {
-        this.field = f;
-    }
-
-    // public String getField() {
-    //     return field;
-    // }
-
-
-
     public static void main(String[] args) {
         int[] intArray = new int[10];
         int[] intArray2 = new int[10];
         String[] stringArray = new String[5];
         Employee e1 = new Employee(1);
         Employee e2 = new Employee(2);
-        Employee e3 = new Employee(0);
-        //MemoryAllocation oo = new MemoryAllocation();
-        Andrei a = new Andrei();
+
     }
 }
 
@@ -67,9 +53,5 @@ class Employee {
     public void setEmpCompany(final String eCompany) {
         this.empCompany = eCompany;
     }
-
-}
-
-class Andrei {
 
 }
