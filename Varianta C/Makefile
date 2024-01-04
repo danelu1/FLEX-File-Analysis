@@ -1,3 +1,5 @@
+# Osnaga Robert-Viorel - 332CC
+
 build:
 	flex tema.l
 	gcc lex.yy.c -o tema -lfl
@@ -5,4 +7,4 @@ build:
 clean:
 	rm -r *.c
 	rm tema
-	rm file.out
+	rm -f *.out

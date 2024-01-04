@@ -1,3 +1,5 @@
+/* Osnaga Robert-Viorel - 332CC */
+
 %option stack
 
 %{
@@ -294,7 +296,7 @@ instances_found "new"[ ]+{ALPHA_NUMERICAL}+\(
 }
 
 <MAIN>{main_array_allocation} {
-    // Am gasit o alocare pentru unu array de obiecte corespuznatoare
+    // Am gasit o alocare pentru un array de obiecte corespuznatoare
     // claselor create in program, deci salvam tipul de date.
     yytext[yyleng - 2] = '\0';
 

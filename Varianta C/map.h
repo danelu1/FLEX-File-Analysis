@@ -1,3 +1,5 @@
+// Osnaga Robert-Viorel - 332CC
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
