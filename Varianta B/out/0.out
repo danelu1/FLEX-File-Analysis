@@ -1,16 +1,16 @@
 Articol in revista:
-	Autor: Author, John
+	Autor: John Author
 	Titlu: "Title of the Article"
 	Revista: Journal Name
 	Anul publicarii: 2019
 	Volum: 10
 	Numar versiune: 3
-	Pagini: 123-145
+	Pagini: 123-145,
 	DOI: 10.1234/journal.2019.0123
 
 Carte:
 	Titlu: "Convolutional neural networks in visual computing: a concise guide"
-	Autor: Venkatesan, Ragav and Li, Baoxin
+	Autor: Ragav Venkatesan, Baoxin Li
 	Anul publicarii: 2017
 	Editura: CRC Press
 

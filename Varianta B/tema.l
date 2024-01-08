@@ -2,6 +2,9 @@
 
 %{
 #include <stdio.h>
+
+char author_surname[1001];
+char author_name[1001];
 %}
 
 %option stack
@@ -9,6 +12,8 @@
 %s ARTICLE INPROCEEDINGS BOOK
 %s IGNORE_OTHER_FIELDS
 %s EXTRACT_INFO_TITLE EXTRACT_INFO
+%s AUTHOR NAME
+%s PAGES EXTRACT_LAST_PAGE LAST
 %s OTHER_RECORDINGS
 
 alpha_numerical [a-zA-Z0-9]
@@ -94,8 +99,8 @@ other_field {whitespace}*[a-zA-Z0-9\-\_:\t.;\'\" ]+{whitespace}*\={whitespace}*
     // Am gasit campul "author" => printam un mesaj corespunzator
     // dupa care punem pe stiva starea "EXTRACT_INFO"
     // La fel si pentru restul campurilor din enunt.
-    printf("\tAutor: ");
-    yy_push_state(EXTRACT_INFO);
+    printf("\tAutor:");
+    yy_push_state(AUTHOR);
 }
 
 {journal} {
@@ -140,7 +145,8 @@ other_field {whitespace}*[a-zA-Z0-9\-\_:\t.;\'\" ]+{whitespace}*\={whitespace}*
 
 {pages} {
     printf("\tPagini: ");
-    yy_push_state(EXTRACT_INFO);
+    yy_push_state(PAGES);
+    // yy_push_state(EXTRACT_INFO);
 }
 
 {volume} {
@@ -166,6 +172,64 @@ other_field {whitespace}*[a-zA-Z0-9\-\_:\t.;\'\" ]+{whitespace}*\={whitespace}*
     yy_pop_state(); 
 }
 
+<AUTHOR>[A-Z][a-zA-Z0-9\.\'\-\`\’]*\, {
+    yytext[yyleng - 1] = '\0';
+    strcpy(author_surname, yytext);
+}
+
+<AUTHOR>[A-Z][a-zA-Z0-9\.\'\-\`\’]* {
+    strcat(author_name, yytext);
+    strcat(author_name, " ");
+}
+
+<AUTHOR>[\n]*{whitespace}+"and"{whitespace}+ {
+    strcat(author_name, author_surname);
+    printf("%s,", author_name);
+    
+    author_name[0] = '\0';
+    author_surname[0] = '\0';
+    
+    yy_pop_state();
+    yy_push_state(AUTHOR);
+}
+
+<AUTHOR>\}(""|\,) {
+    strcat(author_name, author_surname);
+    printf("%s", author_name);
+    author_name[0] = '\0';
+    author_surname[0] = '\0';
+    yy_pop_state();
+}
+
+<AUTHOR>[\n]+ { printf(" "); }
+
+<PAGES>\{[0]* {
+    yy_push_state(EXTRACT_LAST_PAGE);
+}
+
+<PAGES>"--"[0]* {
+    printf("-");
+    yy_push_state(LAST);
+}
+
+<EXTRACT_LAST_PAGE>[0-9]+ {
+    printf("%s", yytext);
+    yy_pop_state();
+}
+
+<LAST>[0-9]+\}\, {
+    yytext[yyleng - 2] = '\0';
+    printf("%s", yytext);
+    yy_pop_state();
+    yy_pop_state();
+}
+
+<LAST>[0-9]+\} {
+    yytext[yyleng - 1] = '\0';
+    printf("%s", yytext);
+    yy_pop_state();
+    yy_pop_state();
+}
 
 <EXTRACT_INFO_TITLE>\{{value}\}\, {
     // Extragem titlul inregistrarii.
@@ -211,6 +275,8 @@ int main(int argc, char **argv)
         printf("File does not exist!\n");
         exit(1);
     }
+
+    // author_name[0] = '\0';
 
     yylex();
     fclose(yyin);

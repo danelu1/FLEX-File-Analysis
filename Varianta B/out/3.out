@@ -1,40 +1,40 @@
 Articol in revista:
-	Autor: Author One
+	Autor: Author One 
 	Titlu: "Title of Article 1"
 	Revista: Journal A
 	Anul publicarii: 2020
 
 Carte:
-	Autor: Writer Two
+	Autor: Writer Two 
 	Titlu: "Title of Book 1"
 	Editura: Publisher X
 	Anul publicarii: 2018
 
 Articol la conferinta:
-	Autor: Scientist Three
+	Autor: Scientist Three 
 	Titlu: "Title of Paper 1"
 	Conferinta: Conference Y
 	Anul publicarii: 2019
 
 Articol in revista:
-	Autor: Researcher Four
+	Autor: Researcher Four 
 	Titlu: "Title of Article 2"
 	Revista: Journal B
 	Anul publicarii: 2017
 
 Carte:
-	Autor: Author Five
+	Autor: Author Five 
 	Titlu: "Title of Book 2"
 	Editura: Publisher Z
 	Anul publicarii: 2022
 
 Articol la conferinta:
-	Autor: Writer Six
+	Autor: Writer Six 
 	Titlu: "Title of Paper 2"
 	Conferinta: Conference Z
 	Anul publicarii: 2021
 
 Carte:
-	Autor: Engineer Seven
+	Autor: Engineer Seven 
 	Titlu: "Title of Technical Report 1"
 	Anul publicarii: 2016
