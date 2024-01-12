@@ -14,7 +14,7 @@ Articol la conferinta:
 	Autor: Scientist Three 
 	Titlu: "Title of Paper 1"
 	Conferinta: Conference Y
-	Anul publicarii: 2019
+	Anul prezentarii: 2019
 
 Articol in revista:
 	Autor: Researcher Four 
@@ -32,7 +32,7 @@ Articol la conferinta:
 	Autor: Writer Six 
 	Titlu: "Title of Paper 2"
 	Conferinta: Conference Z
-	Anul publicarii: 2021
+	Anul prezentarii: 2021
 
 Carte:
 	Autor: Engineer Seven 

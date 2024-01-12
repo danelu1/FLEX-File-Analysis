@@ -1,7 +1,7 @@
 Articol la conferinta:
 	Titlu: "O scurta introducere in algebra liniara"
 	Autor: Andrei Bogdan,   Ionel Tel-Aviv Yafo Sprincenatu
-	Anul publicarii: 2023
+	Anul prezentarii: 2023
 	Editura: Politehnica
 
 Articol in revista:
@@ -9,7 +9,7 @@ Articol in revista:
 	Autor: Bogdan Robi,   Sir Isaac Newton Andrei
 	Volum: 15
 	Carte: 2020 intalnire locala la asociatia de locatari
-	Pagini: 588-592
+	Pagini: 200-300
 	Anul publicarii: 2020
 	Numar versiune: 2
 	Organizatie: BZV AUTO
@@ -21,7 +21,7 @@ Articol la conferinta:
 	Autor:  Andrei Marius Diana, Nelson Muchi, Ciuciulete Mihai, Manescu Bogdan-Constantin,  Ioan-Popa Mihai Bogdan
 	Conferinta: 2010 DRPCIV criza de soferi din cauza examenelor auto prea grele
 	Pagini: 721-724
-	Anul publicarii: 2013
+	Anul prezentarii: 2013
 	Organizatie: Care se nimereste, Care se vrea sa fie
 
 Carte:
@@ -83,7 +83,7 @@ Articol la conferinta:
 	Titlu: "Generic programming within dependently typed programming"
 	Conferinta: In Generic Programming, 2003. Proceedings of the IFIP TC2 Working
 	Conference on Generic Programming, Schloss Dagstuhl
-	Anul publicarii: 2002
+	Anul prezentarii: 2002
 	Pagini: 1-20
 	Editura: Kluwer Academic Publishers
 
@@ -91,13 +91,13 @@ Articol la conferinta:
 	Autor: Thorsten Altenkirch , Conor Mcbride , James Mckinna 
 	Titlu: "Why dependent types matter"
 	Conferinta: In preparation, http://www.e-pig.org/downloads/ydtm.pdf
-	Anul publicarii: 2005
+	Anul prezentarii: 2005
 
 Articol la conferinta:
 	Autor: Biju Appukuttan , Tony Clark , Sreedhar Reddy , Laurence Tratt , R. Venkatesh 
 	Titlu: "A Model Driven Approach to Model Transformations"
 	Conferinta: Proc. Model Driven Architecture: Foundations and Applications 2003
-	Anul publicarii: 2003
+	Anul prezentarii: 2003
 
 Articol la conferinta:
 	Autor: Philipp Bachmann
@@ -105,7 +105,7 @@ Articol la conferinta:
 	an application"
 	Conferinta: PLoP '06: Proceedings of the 2006 conference on Pattern languages
 	of programs
-	Anul publicarii: 2006
+	Anul prezentarii: 2006
 	Pagini: 1-33
 	Editura: ACM
 	DOI: http://doi.acm.org/10.1145/1415472.1415492
@@ -123,6 +123,6 @@ Articol la conferinta:
 	Titlu: "Beyond templates: a study of clones in the STL and some general implications"
 	Conferinta: In ICSE -05: Proceedings of the 27th international conference on
 	Software engineering
-	Anul publicarii: 2005
+	Anul prezentarii: 2005
 	Pagini: 451-459
 	Editura: ACM Press

@@ -13,7 +13,7 @@ char author_name[1001];
 %s IGNORE_OTHER_FIELDS
 %s EXTRACT_INFO_TITLE EXTRACT_INFO
 %s AUTHOR NAME
-%s PAGES EXTRACT_LAST_PAGE LAST
+%s PAGES EXTRACT_FIRST_PAGE EXTRACT_SECOND_PAGE
 %s OTHER_RECORDINGS
 
 alpha_numerical [a-zA-Z0-9]
@@ -97,13 +97,13 @@ other_field {whitespace}*[a-zA-Z0-9\-\_:\t.;\'\" ]+{whitespace}*\={whitespace}*
 
 {author} {
     // Am gasit campul "author" => printam un mesaj corespunzator
-    // dupa care punem pe stiva starea "EXTRACT_INFO"
-    // La fel si pentru restul campurilor din enunt.
+    // dupa care punem pe stiva starea "AUTHOR".
     printf("\tAutor:");
     yy_push_state(AUTHOR);
 }
 
 {journal} {
+    // De aici este analog campului "title", cu exceptia lui "pages".
     printf("\tRevista: ");
     yy_push_state(EXTRACT_INFO);
 }
@@ -123,8 +123,18 @@ other_field {whitespace}*[a-zA-Z0-9\-\_:\t.;\'\" ]+{whitespace}*\={whitespace}*
     yy_push_state(EXTRACT_INFO);
 }
 
-{year} {
+<ARTICLE>{year} {
     printf("\tAnul publicarii: ");
+    yy_push_state(EXTRACT_INFO);
+}
+
+<BOOK>{year} {
+    printf("\tAnul publicarii: ");
+    yy_push_state(EXTRACT_INFO);
+}
+
+<INPROCEEDINGS>{year} {
+    printf("\tAnul prezentarii: ");
     yy_push_state(EXTRACT_INFO);
 }
 
@@ -144,9 +154,10 @@ other_field {whitespace}*[a-zA-Z0-9\-\_:\t.;\'\" ]+{whitespace}*\={whitespace}*
 }
 
 {pages} {
+    // Am gasit campul "pages", deci intram in starea responsabila de
+    // tratarea paginilor.
     printf("\tPagini: ");
     yy_push_state(PAGES);
-    // yy_push_state(EXTRACT_INFO);
 }
 
 {volume} {
@@ -173,16 +184,27 @@ other_field {whitespace}*[a-zA-Z0-9\-\_:\t.;\'\" ]+{whitespace}*\={whitespace}*
 }
 
 <AUTHOR>[A-Z][a-zA-Z0-9\.\'\-\`\’]*\, {
+    // Am gasit un "string" in interiorul campului "author" ce incepe
+    // cu litera mare si contine la final virgula(adica prenumele) =>
+    // salvez in "author_surname" acest "string" pentru a il folosi
+    // ulterior.
     yytext[yyleng - 1] = '\0';
     strcpy(author_surname, yytext);
 }
 
 <AUTHOR>[A-Z][a-zA-Z0-9\.\'\-\`\’]* {
+    // Am gasit un "string" cu litera mare dupa cel cu virgula
+    // la final => il concatenez la numele autorului.
     strcat(author_name, yytext);
     strcat(author_name, " ");
 }
 
 <AUTHOR>[\n]*{whitespace}+"and"{whitespace}+ {
+    // Cand gasesc un "and" inseamna ca mai urmeaza un autor, deci
+    // termin cu autorul curent prin concatenarea prenumelui acestuia
+    // la numele autorului, dupa care resetez cele 2 variabile globale,
+    // ies din starea de "AUTHOR" si intru inapoi pentru a extrage in
+    // continuare numele urmatorului autor.
     strcat(author_name, author_surname);
     printf("%s,", author_name);
     
@@ -194,6 +216,9 @@ other_field {whitespace}*[a-zA-Z0-9\-\_:\t.;\'\" ]+{whitespace}*\={whitespace}*
 }
 
 <AUTHOR>\}(""|\,) {
+    // Aici se incheie campul "author", deci pentru ultimul autor adaug
+    // prenumele aflat pe parcurs, resetez variabilele si ies din starea
+    // "AUTHOR".
     strcat(author_name, author_surname);
     printf("%s", author_name);
     author_name[0] = '\0';
@@ -204,27 +229,37 @@ other_field {whitespace}*[a-zA-Z0-9\-\_:\t.;\'\" ]+{whitespace}*\={whitespace}*
 <AUTHOR>[\n]+ { printf(" "); }
 
 <PAGES>\{[0]* {
-    yy_push_state(EXTRACT_LAST_PAGE);
+    // Daca gasesc mai multe zerouri initial, le ignor si intru
+    // in stare in care extrag prima pagina.
+    yy_push_state(EXTRACT_FIRST_PAGE);
 }
 
-<PAGES>"--"[0]* {
-    printf("-");
-    yy_push_state(LAST);
-}
-
-<EXTRACT_LAST_PAGE>[0-9]+ {
+<EXTRACT_FIRST_PAGE>[0-9]+ {
+    // Afisez pagina, dupa care ma intorc la starea "PAGES".
     printf("%s", yytext);
     yy_pop_state();
 }
 
-<LAST>[0-9]+\}\, {
+<PAGES>"--"[0]* {
+    // Afisez "-" in cazul in care gasesc "--" si mai multe zerouri, deci
+    // ignor zerourile si printez doar "-", dupa care trec in starea care
+    // extrage cea de-a doua pagina.
+    printf("-");
+    yy_push_state(EXTRACT_SECOND_PAGE);
+}
+
+<EXTRACT_SECOND_PAGE>[0-9]+\}\, {
+    // Extrag cea de-a doua pagina(prin eliminarea ultimelor 2 caractere)
+    // si o afisez, dupa care ies de tot din starea "PAGES".
     yytext[yyleng - 2] = '\0';
     printf("%s", yytext);
     yy_pop_state();
     yy_pop_state();
 }
 
-<LAST>[0-9]+\} {
+<EXTRACT_SECOND_PAGE>[0-9]+\} {
+    // La fel, dar "pages" poate fi camp final, deci apare doar "}"
+    // la final. 
     yytext[yyleng - 1] = '\0';
     printf("%s", yytext);
     yy_pop_state();

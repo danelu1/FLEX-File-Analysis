@@ -35,6 +35,8 @@ care este specifica doar titlului. In cazul in care gasim un alt camp decat cele
 "IGNORE_OTHER_FIELDS" cu o regula care da "match" pe orice sir de forma:
     -> "numar,\n+" sau "numar\n+"(pentru formatul numerelor);
     -> "caractere diferite de '}'\n+" sau "caractere diferite de '}',\n+"(pentru orice format).
+Doar campurile "pages" si "author" sunt tratate separat(la "author" pentru extragerea numelui fiecarui autor in parte si la "pages" pentru ignorarea
+tutror zerourilor de la inceputul fiecarui numar si transformarea lui "--" in "-"). Aceste campuri au explicatii in comentariile din cod. 
 Astfel sunt ignorate atat campurile cu tot cu liniile pe care acestea se afla.
 
 In starea de "EXTRACT_INFO" se folosesc reguli de forma "{valoare}," sau "numar," in care se ignora ultimele 2, respectiv ultimul caracter din "yytext"
